@@ -1,6 +1,4 @@
-
 document.addEventListener("DOMContentLoaded", ()=>{
-const myLibrary = [];
 
 class Book{
     constructor(author,title,pages,read){
@@ -11,13 +9,29 @@ class Book{
         this.read = read;
     }
     toggleRead() {
-    this.read = !this.read;
-  }
+        this.read = !this.read;
+    }
+}
+
+const myLibrary = [];
+
+// --- Load saved data ---
+const saved = JSON.parse(localStorage.getItem("myLibrary"));
+if (saved) {
+  saved.forEach(b => {
+    const book = new Book(b.author, b.title, b.pages, b.read);
+    book.id = b.id; // keep IDs
+    myLibrary.push(book);
+  });
+}
+
+function saveLibrary() {
+  localStorage.setItem("myLibrary", JSON.stringify(myLibrary));
 }
 
 function renderLibrary() {
   const container = document.getElementById('container');
-  container.innerHTML = ""; // Clear previous display
+  container.innerHTML = "";
 
   myLibrary.forEach(book => {
     const card = document.createElement('div');
@@ -31,15 +45,13 @@ function renderLibrary() {
       <p>Status: ${book.read ? "Read" : "Not Read"}</p>
       <button class="toggle-read">Toggle Read</button>
       <button class="remove-book">Remove</button>`;
-    
 
-    // Toggle read button
     card.querySelector('.toggle-read').addEventListener('click', () => {
       book.toggleRead();
+      saveLibrary();
       renderLibrary();
     });
 
-    // Remove book button
     card.querySelector('.remove-book').addEventListener('click', () => {
       removeBookById(book.id);
     });
@@ -52,6 +64,7 @@ function removeBookById(id) {
   const index = myLibrary.findIndex(book => book.id === id);
   if (index !== -1) {
     myLibrary.splice(index, 1);
+    saveLibrary();
     renderLibrary();
   }
 }
@@ -60,7 +73,6 @@ const dialog = document.getElementById("dialogBox");
 const newBookBtn = document.getElementById("newBookBtn");
 const closeBtn = document.getElementById("closeBtn");
 
-
 newBookBtn.addEventListener("click", ()=>{
     dialog.showModal();
 });
@@ -68,10 +80,9 @@ closeBtn.addEventListener("click", () => {
     dialog.close();
 });
 
-//Submit data fom input form
 const form = document.getElementById("input");
 
-form.addEventListener("submit",function(e){
+form.addEventListener("submit", function(e){
     e.preventDefault();
 
     const author = document.getElementById("author").value;
@@ -82,11 +93,14 @@ form.addEventListener("submit",function(e){
     const newBook = new Book(author,title,pageNumber,read);
     
     myLibrary.push(newBook);
-    console.log(myLibrary);
+    saveLibrary();
     renderLibrary();
+
     form.reset();
     dialog.close();
+});
 
-})
+// --- Render where loading completes ---
+renderLibrary();
 
-})
+});
